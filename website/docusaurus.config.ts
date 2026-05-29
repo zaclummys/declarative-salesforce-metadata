@@ -6,8 +6,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 // GitHub Pages deployment config. Adjust ORG/REPO to your repository, or change
 // `url`/`baseUrl` if you deploy to Vercel/Netlify/a custom domain.
-const ORG = 'your-org';
-const REPO = 'declarative-sf-metadata';
+const ORG = 'zaclummys';
+const REPO = 'declarative-salesforce-metadata';
 
 const config: Config = {
   title: 'declarative-sf-metadata',
