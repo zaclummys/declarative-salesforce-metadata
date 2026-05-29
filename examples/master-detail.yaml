@@ -1,0 +1,56 @@
+# Master-detail example (single-file form): one master object (Project) and one
+# detail object (Project Task) linked by a MasterDetail field on the detail.
+objects:
+  # ---- Master ----
+  Project__c:
+    label: Project
+    pluralLabel: Projects
+    description: A unit of work that owns one or more tasks
+    sharingModel: ReadWrite
+    nameField:
+      fullName: Name
+      label: Project Name
+      type: Text
+
+    fields:
+      Stage__c:
+        label: Stage
+        type: Picklist
+        valueSet:
+          values:
+            - fullName: Planned
+              label: Planned
+              default: true
+            - fullName: Active
+              label: Active
+            - fullName: Closed
+              label: Closed
+
+  # ---- Detail ----
+  Project_Task__c:
+    label: Project Task
+    pluralLabel: Project Tasks
+    description: A task that rolls up to its parent project
+    # Detail objects inherit sharing from the master, so sharingModel is
+    # controlled by the relationship rather than set here.
+    nameField:
+      fullName: Name
+      label: Task Number
+      type: AutoNumber
+      displayFormat: TASK-{0000}
+
+    fields:
+      # The master-detail field: links each task to its parent project.
+      Project__c:
+        label: Project
+        type: MasterDetail
+        referenceTo: Project__c
+        relationshipLabel: Tasks
+        relationshipName: Tasks
+        reparentableMasterDetail: false
+
+      Hours__c:
+        label: Hours
+        type: Number
+        precision: 5
+        scale: 2

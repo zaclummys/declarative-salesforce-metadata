@@ -1,0 +1,10 @@
+{
+  "orgName": "declarative-sf-metadata e2e",
+  "edition": "Developer",
+  "features": [],
+  "settings": {
+    "lightningExperienceSettings": {
+      "enableS1DesktopEnabled": true
+    }
+  }
+}

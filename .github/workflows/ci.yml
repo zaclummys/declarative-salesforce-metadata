@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: build & offline checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      # Runs unit tests plus the CLI e2e tests (filesystem checks); no org needed.
+      - run: npm test
+
+  deploy-verify:
+    name: deploy verification (check-only)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      # Deploy verification needs an org. It runs only when SFDX_AUTH_URL is
+      # configured (a Dev Hub auth URL secret); otherwise it is skipped so forks
+      # and secret-less runs stay green.
+      - name: Check for org auth secret
+        id: guard
+        env:
+          SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
+        run: |
+          if [[ -z "${SFDX_AUTH_URL}" ]]; then
+            echo "has_auth=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No SFDX_AUTH_URL secret configured; skipping deploy verification."
+          else
+            echo "has_auth=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Salesforce CLI
+        if: steps.guard.outputs.has_auth == 'true'
+        run: npm install --global @salesforce/cli
+
+      - name: Authenticate Dev Hub
+        if: steps.guard.outputs.has_auth == 'true'
+        env:
+          SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
+        run: |
+          printf '%s' "${SFDX_AUTH_URL}" > /tmp/sfdx-auth.txt
+          sf org login sfdx-url --sfdx-url-file /tmp/sfdx-auth.txt --set-default-dev-hub --alias devhub
+
+      - name: Create scratch org
+        if: steps.guard.outputs.has_auth == 'true'
+        working-directory: e2e/deploy
+        run: sf org create scratch --definition-file config/project-scratch-def.json --alias ci-scratch --duration-days 1 --wait 30
+
+      - name: Verify deploys (check-only)
+        if: steps.guard.outputs.has_auth == 'true'
+        run: bash scripts/verify-deploy.sh ci-scratch
+
+      - name: Delete scratch org
+        if: always() && steps.guard.outputs.has_auth == 'true'
+        run: sf org delete scratch --target-org ci-scratch --no-prompt || true

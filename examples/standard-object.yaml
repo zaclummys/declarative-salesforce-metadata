@@ -1,0 +1,32 @@
+# Standard object: add custom fields to a Salesforce standard object (Account).
+# The object name has no `__c`, so the tool emits ONLY the custom fields — no
+# Account.object-meta.xml — since a standard object's settings, label, and name
+# field can't be redefined via deploy. No label/pluralLabel/nameField needed.
+objects:
+  Account:
+    fields:
+      Health_Score__c:
+        label: Health Score
+        type: Number
+        precision: 3
+        scale: 0
+
+      Account_Tier__c:
+        label: Account Tier
+        type: Picklist
+        valueSet:
+          values:
+            - fullName: Bronze
+              label: Bronze
+              default: true
+            - fullName: Silver
+              label: Silver
+            - fullName: Gold
+              label: Gold
+            - fullName: Platinum
+              label: Platinum
+
+      Primary_Region__c:
+        label: Primary Region
+        type: Text
+        length: 80

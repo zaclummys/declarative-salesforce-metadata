@@ -1,0 +1,55 @@
+# History tracking: mark fields with `trackHistory: true` to record changes.
+# The object's `enableHistory` flag is auto-wired on whenever any of its fields
+# tracks history, so you never set it by hand (and the two can't drift out of
+# sync, which would be a deploy error). At deploy time Salesforce provisions the
+# related `Support_Case__History` object automatically.
+objects:
+  Support_Case__c:
+    label: Support Case
+    pluralLabel: Support Cases
+    description: A customer support case
+    sharingModel: ReadWrite
+    nameField:
+      fullName: Name
+      label: Case Number
+      type: AutoNumber
+      displayFormat: CASE-{0000}
+
+    fields:
+      # Tracked fields — changes are recorded in field history.
+      Status__c:
+        label: Status
+        type: Picklist
+        trackHistory: true
+        valueSet:
+          values:
+            - fullName: New
+              label: New
+              default: true
+            - fullName: Working
+              label: Working
+            - fullName: Escalated
+              label: Escalated
+            - fullName: Closed
+              label: Closed
+
+      Priority__c:
+        label: Priority
+        type: Picklist
+        trackHistory: true
+        valueSet:
+          values:
+            - fullName: Low
+              label: Low
+            - fullName: Medium
+              label: Medium
+              default: true
+            - fullName: High
+              label: High
+
+      # Not tracked — no trackHistory key.
+      Summary__c:
+        label: Summary
+        type: LongTextArea
+        length: 32000
+        visibleLines: 5

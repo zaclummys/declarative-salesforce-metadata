@@ -1,0 +1,46 @@
+# Nested master-detail: a detail object is declared inside its master under
+# `details:`. Each detail becomes its own top-level object, and the tool
+# auto-generates the MasterDetail field on the detail pointing back to the
+# master. Compare with master-detail.yaml, which wires the relationship by hand.
+objects:
+  Project__c:
+    label: Project
+    pluralLabel: Projects
+    description: A unit of work that owns one or more tasks
+    sharingModel: ReadWrite
+    nameField:
+      fullName: Name
+      label: Project Name
+      type: Text
+    fields:
+      Stage__c:
+        label: Stage
+        type: Picklist
+        valueSet:
+          values:
+            - fullName: Planned
+              label: Planned
+              default: true
+            - fullName: Active
+              label: Active
+            - fullName: Closed
+              label: Closed
+
+    # Detail objects. The MasterDetail field back to Project is generated for you.
+    details:
+      Project_Task__c:
+        label: Project Task
+        pluralLabel: Project Tasks
+        description: A task that rolls up to its parent project
+        relationshipName: Tasks      # child relationship as seen from Project
+        nameField:
+          fullName: Name
+          label: Task Number
+          type: AutoNumber
+          displayFormat: TASK-{0000}
+        fields:
+          Hours__c:
+            label: Hours
+            type: Number
+            precision: 5
+            scale: 2

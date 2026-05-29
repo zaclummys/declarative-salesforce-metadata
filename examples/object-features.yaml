@@ -1,0 +1,27 @@
+# Object feature toggles: boolean switches on a custom object that enable
+# platform features. They are passed straight through to the object XML.
+objects:
+  Equipment__c:
+    label: Equipment
+    pluralLabel: Equipment
+    description: Trackable physical equipment
+    sharingModel: ReadWrite
+    nameField:
+      fullName: Name
+      label: Equipment Name
+      type: Text
+
+    # Feature toggles
+    enableActivities: true       # log tasks/events against records
+    enableReports: true          # available in the report builder
+    enableSearch: true           # included in global search
+    enableFeeds: true            # Chatter feed on records
+    enableBulkApi: true
+    enableStreamingApi: true
+
+    fields:
+      Serial_Number__c:
+        label: Serial Number
+        type: Text
+        length: 60
+        unique: true
