@@ -18,29 +18,41 @@ this first version: **custom objects** and **custom fields** only.
 
 ## File layout
 
-The model can be expressed two ways; both produce the same in-memory model.
+A model is loaded from a path that is either a **single file** or a **directory**.
+When a directory is given, **all** `.yaml`/`.yml` files under it (recursively) are
+loaded and merged into one model. Each file may use either form below, and the two
+may be mixed freely within a directory.
 
-### Per-object files (recommended for real models)
+### Single-object file
 
 ```
-objects/
-  Invoice__c.yaml
-  Invoice_Line__c.yaml
-  Account.yaml          # standard object: only adds custom fields
+Invoice__c.yaml
 ```
 
-The tool globs `objects/*.yaml`. Each file declares one object. The object's API
-name comes from the file's `fullName:` key (not the filename), so renaming a file
-never changes the deployed API name.
+The object *is* the document; its API name comes from the top-level `fullName:`
+key (not the filename), so renaming a file never changes the deployed API name.
 
-### Single file (fine for small models)
+### Multi-object file
 
 ```
 model.yaml
 ```
 
-Contains a top-level `objects:` map keyed by API name. Here the map key *is* the
-API name, so `fullName:` is omitted on each object.
+A top-level `objects:` map keyed by API name. Here the map key *is* the API name,
+so `fullName:` is omitted on each object.
+
+### Directory
+
+```
+my-model/
+  Invoice__c.yaml          # single-object file
+  Account.yaml             # standard object: only adds custom fields
+  relationships.yaml       # multi-object file (objects: map)
+  subfolder/Order__c.yaml  # nested files are loaded too
+```
+
+All files are merged; duplicate object API names across files are a validation
+error.
 
 ## Object schema
 

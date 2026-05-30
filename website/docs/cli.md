@@ -36,10 +36,12 @@ error and keeps watching, so you can fix the model and see the next run succeed.
 
 `<input>` may be either:
 
-- a **directory** containing `objects/*.yaml` (one object per file), or
-- a **single YAML file** with a top-level `objects:` map.
+- a **single YAML file** (a single-object file with `fullName`, or a multi-object
+  file with an `objects:` map), or
+- a **directory**, in which case all `.yaml`/`.yml` files under it (recursively)
+  are loaded and merged into one model.
 
-Both produce the same model. See [Data model](/model/data-model).
+See [Data model](/model/data-model).
 
 ## Global flags
 

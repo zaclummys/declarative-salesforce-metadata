@@ -1,16 +1,18 @@
-# Master-detail example (single-file form): one master object (Project) and one
-# detail object (Project Task) linked by a MasterDetail field on the detail.
+# Master-detail example (single-file form): one master object (Order) and one
+# detail object (Order Item) linked by a MasterDetail field on the detail.
+# See nested-details.yaml for the same relationship expressed via `details:`.
 objects:
   # ---- Master ----
-  Project__c:
-    label: Project
-    pluralLabel: Projects
-    description: A unit of work that owns one or more tasks
+  Order__c:
+    label: Order
+    pluralLabel: Orders
+    description: A customer order that owns one or more line items
     sharingModel: ReadWrite
     nameField:
       fullName: Name
-      label: Project Name
-      type: Text
+      label: Order Number
+      type: AutoNumber
+      displayFormat: ORD-{0000}
 
     fields:
       Stage__c:
@@ -18,39 +20,39 @@ objects:
         type: Picklist
         valueSet:
           values:
-            - fullName: Planned
-              label: Planned
+            - fullName: Draft
+              label: Draft
               default: true
-            - fullName: Active
-              label: Active
-            - fullName: Closed
-              label: Closed
+            - fullName: Submitted
+              label: Submitted
+            - fullName: Fulfilled
+              label: Fulfilled
 
   # ---- Detail ----
-  Project_Task__c:
-    label: Project Task
-    pluralLabel: Project Tasks
-    description: A task that rolls up to its parent project
+  Order_Item__c:
+    label: Order Item
+    pluralLabel: Order Items
+    description: A line item that rolls up to its parent order
     # Detail objects inherit sharing from the master, so sharingModel is
     # controlled by the relationship rather than set here.
     nameField:
       fullName: Name
-      label: Task Number
+      label: Line Number
       type: AutoNumber
-      displayFormat: TASK-{0000}
+      displayFormat: LINE-{0000}
 
     fields:
-      # The master-detail field: links each task to its parent project.
-      Project__c:
-        label: Project
+      # The master-detail field: links each item to its parent order.
+      Order__c:
+        label: Order
         type: MasterDetail
-        referenceTo: Project__c
-        relationshipLabel: Tasks
-        relationshipName: Tasks
+        referenceTo: Order__c
+        relationshipLabel: Order Items
+        relationshipName: Items
         reparentableMasterDetail: false
 
-      Hours__c:
-        label: Hours
+      Quantity__c:
+        label: Quantity
         type: Number
         precision: 5
-        scale: 2
+        scale: 0

@@ -6,21 +6,22 @@ sidebar_position: 1
 
 ## File layout
 
-The model can be expressed two ways; both produce the same in-memory model.
+A model is loaded from a **single file** or a **directory**. When you point at a
+directory, **all** `.yaml`/`.yml` files under it (recursively) are loaded and
+merged into one model. Each file may use either form below, and they can be mixed.
 
-### Per-object files
+### Single-object file
 
+```yaml
+fullName: Invoice__c
+label: Invoice
+# ...
 ```
-objects/
-  Invoice__c.yaml
-  Invoice_Line__c.yaml
-```
 
-The tool reads `objects/*.yaml`. Each file declares one object and **requires a
-top-level `fullName`** (the exact API name), so renaming a file never changes the
-deployed API name.
+The object *is* the document, and **requires a top-level `fullName`** (the exact
+API name), so renaming the file never changes the deployed API name.
 
-### Single file
+### Multi-object file
 
 ```yaml
 objects:
@@ -31,6 +32,18 @@ objects:
 
 A top-level `objects:` map keyed by API name. Here the key *is* the API name, so
 `fullName` is omitted.
+
+### Directory
+
+```
+my-model/
+  Invoice__c.yaml          # single-object file
+  relationships.yaml       # multi-object file
+  subfolder/Order__c.yaml  # nested files are loaded too
+```
+
+All files are merged; duplicate object API names across files are a validation
+error.
 
 ## Object schema
 

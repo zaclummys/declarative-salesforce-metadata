@@ -88,6 +88,18 @@ describe("dsfm generate — filesystem output", () => {
     expect(mdXml).toContain("<relationshipName>Tasks</relationshipName>");
   });
 
+  it("merges every YAML file in a directory into one model", () => {
+    const dest = join(outDir, "all");
+    const r = dsfm(["generate", "examples", "-o", dest]);
+    expect(r.status).toBe(0);
+
+    // Objects come from different files across the examples directory.
+    const objects = join(dest, "objects");
+    for (const obj of ["Invoice__c", "Order__c", "Project__c", "Account"]) {
+      expect(existsSync(join(objects, obj))).toBe(true);
+    }
+  });
+
   it("passes object feature toggles through to the object XML", () => {
     const dest = join(outDir, "features");
     const r = dsfm(["generate", "examples/object-features.yaml", "-o", dest]);

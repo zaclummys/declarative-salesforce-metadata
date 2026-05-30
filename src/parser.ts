@@ -15,52 +15,64 @@ export class ParseError extends Error {
 
 /**
  * Resolve a model from a path. The path may be:
- *  - a directory containing `objects/<Name>.yaml` files (per-object layout), or
- *  - a single YAML file with a top-level `objects:` map (single-file layout).
+ *  - a single YAML file, or
+ *  - a directory, in which case **all** `.yaml`/`.yml` files under it
+ *    (recursively) are loaded and merged into one model.
+ *
+ * Each file is either a single-object file (top-level `fullName`) or a
+ * multi-object file (top-level `objects:` map); both forms may be mixed within
+ * a directory.
  */
 export function loadModel(inputPath: string): Model {
   if (!existsSync(inputPath)) {
     throw new ParseError(`path does not exist: ${inputPath}`);
   }
-  return statSync(inputPath).isDirectory()
-    ? loadFromDirectory(inputPath)
-    : loadFromSingleFile(inputPath);
-}
 
-function loadFromDirectory(dir: string): Model {
-  const objectsDir = existsSync(join(dir, "objects")) ? join(dir, "objects") : dir;
-  const files = readdirSync(objectsDir)
-    .filter((f) => f.endsWith(".yaml") || f.endsWith(".yml"))
-    .map((f) => join(objectsDir, f));
-
+  const files = statSync(inputPath).isDirectory() ? yamlFilesIn(inputPath) : [inputPath];
   if (files.length === 0) {
-    throw new ParseError(`no .yaml files found in ${objectsDir}`);
+    throw new ParseError(`no .yaml files found in ${inputPath}`);
   }
 
-  const objects = files.flatMap((file) => {
-    const raw = parseYaml(readFileSync(file, "utf8")) ?? {};
-    if (typeof raw !== "object") {
-      throw new ParseError("expected a mapping at the top level", file);
-    }
-    if (!raw.fullName) {
-      throw new ParseError("per-object files require a top-level `fullName`", file);
-    }
-    return buildObjects(raw.fullName, raw, file);
-  });
-
+  const objects = files.flatMap(parseFile);
   return { objects };
 }
 
-function loadFromSingleFile(file: string): Model {
-  const raw = parseYaml(readFileSync(file, "utf8")) ?? {};
-  const objectsMap = raw.objects;
-  if (!objectsMap || typeof objectsMap !== "object") {
-    throw new ParseError("single-file model requires a top-level `objects` map", file);
+/** Recursively collect every `.yaml`/`.yml` file under a directory, sorted. */
+function yamlFilesIn(dir: string): string[] {
+  const entries = readdirSync(dir, { withFileTypes: true });
+  const files: string[] = [];
+  for (const entry of entries) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...yamlFilesIn(full));
+    } else if (entry.name.endsWith(".yaml") || entry.name.endsWith(".yml")) {
+      files.push(full);
+    }
   }
-  const objects = Object.entries(objectsMap).flatMap(([apiName, def]) =>
-    buildObjects(apiName, def as Record<string, unknown>, file)
+  return files.sort();
+}
+
+/** Parse one model file into objects, accepting either supported form. */
+function parseFile(file: string): SObject[] {
+  const raw = parseYaml(readFileSync(file, "utf8")) ?? {};
+  if (typeof raw !== "object") {
+    throw new ParseError("expected a mapping at the top level", file);
+  }
+
+  if (raw.objects && typeof raw.objects === "object") {
+    // Multi-object file: a top-level `objects:` map keyed by API name.
+    return Object.entries(raw.objects).flatMap(([apiName, def]) =>
+      buildObjects(apiName, def as Record<string, unknown>, file)
+    );
+  }
+  if (raw.fullName) {
+    // Single-object file: the object is the document, keyed by `fullName`.
+    return buildObjects(raw.fullName, raw, file);
+  }
+  throw new ParseError(
+    "file must have either a top-level `objects:` map or a `fullName`",
+    file
   );
-  return { objects };
 }
 
 /**
@@ -86,6 +98,14 @@ function buildObjects(fullName: string, raw: any, file: string, master?: SObject
         detailPlural: obj.pluralLabel,
       })
     );
+  }
+
+  // A detail in a master-detail relationship inherits sharing from its master:
+  // Salesforce requires its sharingModel to be `ControlledByParent` (and rejects
+  // any other value). Applies whether the MasterDetail field was authored
+  // explicitly or synthesized from nesting.
+  if (obj.fields.some((f) => f.type === "MasterDetail")) {
+    obj.sharingModel = "ControlledByParent";
   }
 
   const result: SObject[] = [obj];
