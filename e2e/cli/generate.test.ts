@@ -140,7 +140,7 @@ describe("dsfm generate — filesystem output", () => {
     const r = dsfm(["generate", "examples/global-value-set.yaml", "-o", dest]);
     expect(r.status).toBe(0);
 
-    const gvsPath = join(dest, "globalValueSets", "Industry.globalValueSet-meta.xml");
+    const gvsPath = join(dest, "globalValueSets", "Industry__gvs.globalValueSet-meta.xml");
     expect(existsSync(gvsPath)).toBe(true);
     const gvsXml = readFileSync(gvsPath, "utf8");
     expect(gvsXml).toContain("<GlobalValueSet");
@@ -152,7 +152,7 @@ describe("dsfm generate — filesystem output", () => {
       join(dest, "objects", "Partner__c", "fields", "Industry__c.field-meta.xml"),
       "utf8"
     );
-    expect(fieldXml).toContain("<valueSetName>Industry</valueSetName>");
+    expect(fieldXml).toContain("<valueSetName>Industry__gvs</valueSetName>");
     expect(fieldXml).not.toContain("<valueSetDefinition>");
   });
 

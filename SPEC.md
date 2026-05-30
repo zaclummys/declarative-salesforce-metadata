@@ -147,8 +147,8 @@ exactly one of the two:
 
 ```yaml
 valueSet:
-  valueSetName: Industry  # use a shared global value set instead of inline values
-  restricted: true        # optional
+  valueSetName: Industry__gvs  # use a shared global value set instead of inline values
+  restricted: true             # optional
 ```
 
 ## Global value sets
@@ -161,8 +161,8 @@ appear in its own file or alongside `objects:`), keyed by API name:
 
 ```yaml
 globalValueSets:
-  Industry:
-    label: Industry             # → masterLabel
+  Industry__gvs:                # API name carries the `__gvs` suffix
+    label: Industry             # → masterLabel (human label, no suffix)
     sorted: false               # optional, default false
     description: Shared industry classification
     values:
@@ -178,13 +178,19 @@ A picklist field then references it with `valueSet.valueSetName` (see
 `objects/`:
 
 ```
-force-app/main/default/globalValueSets/Industry.globalValueSet-meta.xml
+force-app/main/default/globalValueSets/Industry__gvs.globalValueSet-meta.xml
 ```
 
 Anchored on the official `GlobalValueSet` type (`@salesforce/types/metadata`):
 the friendly `label` becomes `masterLabel` and `values:` becomes `customValue[]`
-(same friendly authoring as an inline picklist). A field's `valueSetName` must
-resolve to a global value set defined in the model — checked by `dsfm validate`.
+(same friendly authoring as an inline picklist).
+
+- **Naming.** A global value set's API name **must end in `__gvs`** — the same
+  explicit, no-auto-suffix rule as `__c` for custom objects. Salesforce appends
+  `__gvs` itself if you omit it, which silently breaks the name fields reference,
+  so `dsfm validate` requires it up front.
+- **Reference.** A field's `valueSetName` must resolve to a global value set
+  defined in the model — also checked by `dsfm validate`.
 
 ## Example — full object (per-file form)
 

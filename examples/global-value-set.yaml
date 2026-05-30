@@ -3,8 +3,10 @@
 # instead of declaring the values inline. Defining it and using it can live in the
 # same file or different files — the directory is merged into one model.
 globalValueSets:
-  Industry:
-    label: Industry                  # → masterLabel
+  # Global value set API names carry the `__gvs` suffix, just as custom objects
+  # and fields carry `__c`. Write it explicitly — the tool never auto-suffixes.
+  Industry__gvs:
+    label: Industry                  # → masterLabel (human label, no suffix)
     description: Shared industry classification
     values:
       - fullName: Technology
@@ -29,5 +31,5 @@ objects:
         label: Industry
         type: Picklist
         valueSet:
-          valueSetName: Industry
+          valueSetName: Industry__gvs
           restricted: true
