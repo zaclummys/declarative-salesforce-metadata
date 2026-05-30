@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, basename } from "node:path";
 import { parse as parseYaml } from "yaml";
-import { isCustomObject, OBJECT_FEATURE_TOGGLES, type Field, type Model, type SObject } from "./model.js";
+import { isCustomObject, OBJECT_FEATURE_TOGGLES, type Field, type Model, type RecordType, type SObject } from "./model.js";
 
 const DEFAULT_SHARING_MODEL = "ReadWrite";
 const DEFAULT_DEPLOYMENT_STATUS = "Deployed";
@@ -164,6 +164,12 @@ function toSObject(fullName: string, raw: any, file: string): SObject {
     fields,
   };
 
+  if (raw.recordTypes && typeof raw.recordTypes === "object") {
+    obj.recordTypes = Object.entries(raw.recordTypes).map(([rtName, def]) =>
+      toRecordType(rtName, def as Record<string, unknown>)
+    );
+  }
+
   // Standard objects only receive added custom fields — no object defaults or
   // object-meta.xml — so object-level settings apply to custom objects only.
   if (custom) {
@@ -204,6 +210,32 @@ function toField(fullName: string, raw: any): Field {
   }
 
   return field;
+}
+
+/**
+ * Translate the friendly record-type form into the official `RecordType` shape.
+ * `active` defaults to true. Each `picklists:` entry restricts which values are
+ * available for the record type; the first value listed becomes its default.
+ */
+function toRecordType(fullName: string, raw: any): RecordType {
+  const rt: RecordType = {
+    fullName,
+    label: raw.label ?? fullName,
+    active: raw.active ?? true,
+  };
+  if (raw.description !== undefined) rt.description = raw.description;
+
+  if (raw.picklists && typeof raw.picklists === "object") {
+    rt.picklistValues = Object.entries(raw.picklists).map(([picklist, values]) => ({
+      picklist,
+      values: (values as string[]).map((value, i) => ({
+        fullName: value,
+        default: i === 0,
+      })),
+    }));
+  }
+
+  return rt;
 }
 
 /** Derive a default object filename for emit output. */

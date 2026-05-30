@@ -1,0 +1,39 @@
+# Record types: named object variants that restrict which picklist values are
+# available (and pick a per-record-type default). Declared under `recordTypes:`
+# on the object; each becomes its own recordTypes/<name>.recordType-meta.xml.
+# An omitted picklist means all values are available — you only list restrictions.
+fullName: Account__c
+label: Account
+pluralLabel: Accounts
+description: Customer account with segment-specific record types
+nameField:
+  fullName: Name
+  label: Account Name
+  type: Text
+
+fields:
+  Segment__c:
+    label: Segment
+    type: Picklist
+    valueSet:
+      values:
+        - fullName: SMB
+          label: SMB
+          default: true
+        - fullName: MidMarket
+          label: Mid-Market
+        - fullName: Enterprise
+          label: Enterprise
+
+recordTypes:
+  SMB:
+    label: SMB
+    description: Small and mid-size business accounts
+    picklists:
+      Segment__c: [SMB]                  # only SMB available; it is the default
+
+  Enterprise:
+    label: Enterprise
+    description: Large enterprise accounts
+    picklists:
+      Segment__c: [Enterprise, MidMarket]  # first listed (Enterprise) is the default

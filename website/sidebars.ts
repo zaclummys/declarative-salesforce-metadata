@@ -18,6 +18,7 @@ const sidebars: SidebarsConfig = {
         'features/history-tracking',
         'features/object-features',
         'features/standard-objects',
+        'features/record-types',
       ],
     },
     'deployment',
