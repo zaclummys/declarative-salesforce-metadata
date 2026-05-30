@@ -22,20 +22,36 @@ const REQUIRED_KEYS: Partial<Record<FieldType, (keyof Field)[]>> = {
 
 export function validate(model: Model): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  const seenObjects = new Set<string>();
 
+  const globalValueSets = validateGlobalValueSets(model, issues);
+
+  const seenObjects = new Set<string>();
   for (const obj of model.objects) {
     if (seenObjects.has(obj.fullName)) {
       issues.push({ path: obj.fullName, message: "duplicate object fullName" });
     }
     seenObjects.add(obj.fullName);
-    validateObject(obj, issues);
+    validateObject(obj, issues, globalValueSets);
   }
 
   return issues;
 }
 
-function validateObject(obj: SObject, issues: ValidationIssue[]): void {
+/** Validate the global value sets and return the set of names defined in the model. */
+function validateGlobalValueSets(model: Model, issues: ValidationIssue[]): Set<string> {
+  const seen = new Set<string>();
+  for (const gvs of model.globalValueSets ?? []) {
+    const path = `globalValueSets.${gvs.fullName}`;
+    const at = (msg: string) => issues.push({ path, message: msg });
+    if (seen.has(gvs.fullName)) at("duplicate global value set fullName");
+    seen.add(gvs.fullName);
+    if (!gvs.masterLabel) at("missing `label`");
+    if ((gvs.customValue?.length ?? 0) === 0) at("must contain at least one value");
+  }
+  return seen;
+}
+
+function validateObject(obj: SObject, issues: ValidationIssue[], globalValueSets: Set<string>): void {
   const at = (msg: string) => issues.push({ path: obj.fullName, message: msg });
 
   // Standard objects only receive added custom fields, so object metadata
@@ -56,7 +72,7 @@ function validateObject(obj: SObject, issues: ValidationIssue[]): void {
       issues.push({ path: fieldPath, message: "duplicate field fullName" });
     }
     seenFields.add(field.fullName);
-    validateField(field, fieldPath, issues);
+    validateField(field, fieldPath, issues, globalValueSets);
   }
 
   validateRecordTypes(obj, issues);
@@ -101,7 +117,12 @@ function validateRecordTypes(obj: SObject, issues: ValidationIssue[]): void {
   }
 }
 
-function validateField(field: Field, path: string, issues: ValidationIssue[]): void {
+function validateField(
+  field: Field,
+  path: string,
+  issues: ValidationIssue[],
+  globalValueSets: Set<string>
+): void {
   const at = (msg: string) => issues.push({ path, message: msg });
 
   if (!field.label) at("missing `label`");
@@ -120,7 +141,16 @@ function validateField(field: Field, path: string, issues: ValidationIssue[]): v
     }
   }
 
-  if (field.valueSet && (field.valueSet.valueSetDefinition?.value?.length ?? 0) === 0) {
-    at("valueSet must contain at least one value");
+  // A picklist's values come from either an inline `valueSetDefinition` or a
+  // reference to a global value set (`valueSetName`) — exactly one is required.
+  if (field.valueSet) {
+    const { valueSetName, valueSetDefinition } = field.valueSet;
+    if (valueSetName) {
+      if (!globalValueSets.has(valueSetName)) {
+        at(`references unknown global value set \`${valueSetName}\``);
+      }
+    } else if ((valueSetDefinition?.value?.length ?? 0) === 0) {
+      at("valueSet must contain at least one value (or a `valueSetName`)");
+    }
   }
 }

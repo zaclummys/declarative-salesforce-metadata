@@ -19,6 +19,7 @@ const sidebars: SidebarsConfig = {
         'features/object-features',
         'features/standard-objects',
         'features/record-types',
+        'features/global-value-sets',
       ],
     },
     'deployment',

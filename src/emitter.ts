@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { XMLBuilder } from "fast-xml-parser";
-import { isCustomObject, type Field, type Model, type SObject } from "./model.js";
+import { isCustomObject, type Field, type GlobalValueSet, type Model, type SObject } from "./model.js";
 
 const XMLNS = "http://soap.sforce.com/2006/04/metadata";
 
@@ -21,6 +21,15 @@ export interface EmitResult {
 export function emit(model: Model, outDir: string): EmitResult {
   const files: string[] = [];
   const objectsRoot = join(outDir, "objects");
+
+  // Global value sets are top-level components, not nested under an object.
+  for (const gvs of model.globalValueSets ?? []) {
+    const gvsDir = join(outDir, "globalValueSets");
+    mkdirSync(gvsDir, { recursive: true });
+    const gvsFile = join(gvsDir, `${gvs.fullName}.globalValueSet-meta.xml`);
+    writeFileSync(gvsFile, globalValueSetXml(gvs));
+    files.push(gvsFile);
+  }
 
   for (const obj of model.objects) {
     const objDir = join(objectsRoot, obj.fullName);
@@ -69,6 +78,13 @@ function objectXml(obj: SObject): string {
 
 function fieldXml(field: Field): string {
   return document("CustomField", field);
+}
+
+function globalValueSetXml(gvs: GlobalValueSet): string {
+  // In source format the file name carries the API name, so the top-level
+  // fullName is omitted (its customValue entries keep their own fullName).
+  const { fullName, ...body } = gvs;
+  return document("GlobalValueSet", body);
 }
 
 function document(rootTag: string, body: object): string {

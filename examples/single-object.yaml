@@ -1,3 +1,6 @@
+# Single-object file: the object IS the document, keyed by a top-level
+# `fullName:` (not the filename). Demonstrates common field types — Currency,
+# Picklist, and Lookup. Renaming this file never changes the deployed API name.
 fullName: Invoice__c
 label: Invoice
 pluralLabel: Invoices

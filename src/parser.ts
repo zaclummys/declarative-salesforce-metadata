@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
 import { join, basename } from "node:path";
 import { parse as parseYaml } from "yaml";
-import { isCustomObject, OBJECT_FEATURE_TOGGLES, type Field, type Model, type RecordType, type SObject } from "./model.js";
+import { isCustomObject, OBJECT_FEATURE_TOGGLES, type Field, type GlobalValueSet, type Model, type RecordType, type SObject } from "./model.js";
 
 const DEFAULT_SHARING_MODEL = "ReadWrite";
 const DEFAULT_DEPLOYMENT_STATUS = "Deployed";
@@ -33,8 +33,11 @@ export function loadModel(inputPath: string): Model {
     throw new ParseError(`no .yaml files found in ${inputPath}`);
   }
 
-  const objects = files.flatMap(parseFile);
-  return { objects };
+  const parsed = files.map(parseFile);
+  return {
+    objects: parsed.flatMap((p) => p.objects),
+    globalValueSets: parsed.flatMap((p) => p.globalValueSets),
+  };
 }
 
 /** Recursively collect every `.yaml`/`.yml` file under a directory, sorted. */
@@ -52,27 +55,43 @@ function yamlFilesIn(dir: string): string[] {
   return files.sort();
 }
 
-/** Parse one model file into objects, accepting either supported form. */
-function parseFile(file: string): SObject[] {
+interface ParsedFile {
+  objects: SObject[];
+  globalValueSets: GlobalValueSet[];
+}
+
+/** Parse one model file, accepting any supported top-level form. */
+function parseFile(file: string): ParsedFile {
   const raw = parseYaml(readFileSync(file, "utf8")) ?? {};
   if (typeof raw !== "object") {
     throw new ParseError("expected a mapping at the top level", file);
   }
 
+  // `globalValueSets:` may appear on its own or alongside objects in any file.
+  const globalValueSets: GlobalValueSet[] =
+    raw.globalValueSets && typeof raw.globalValueSets === "object"
+      ? Object.entries(raw.globalValueSets).map(([name, def]) =>
+          toGlobalValueSet(name, def as Record<string, unknown>)
+        )
+      : [];
+
+  let objects: SObject[] = [];
   if (raw.objects && typeof raw.objects === "object") {
     // Multi-object file: a top-level `objects:` map keyed by API name.
-    return Object.entries(raw.objects).flatMap(([apiName, def]) =>
+    objects = Object.entries(raw.objects).flatMap(([apiName, def]) =>
       buildObjects(apiName, def as Record<string, unknown>, file)
     );
-  }
-  if (raw.fullName) {
+  } else if (raw.fullName) {
     // Single-object file: the object is the document, keyed by `fullName`.
-    return buildObjects(raw.fullName, raw, file);
+    objects = buildObjects(raw.fullName, raw, file);
+  } else if (globalValueSets.length === 0) {
+    throw new ParseError(
+      "file must have a top-level `objects:` map, a `fullName`, or `globalValueSets:`",
+      file
+    );
   }
-  throw new ParseError(
-    "file must have either a top-level `objects:` map or a `fullName`",
-    file
-  );
+
+  return { objects, globalValueSets };
 }
 
 /**
@@ -236,6 +255,29 @@ function toRecordType(fullName: string, raw: any): RecordType {
   }
 
   return rt;
+}
+
+/**
+ * Translate the friendly global-value-set form into the official `GlobalValueSet`
+ * shape: `label` becomes `masterLabel`, and the `values:` list becomes
+ * `customValue[]` (same friendly authoring as an inline picklist).
+ */
+function toGlobalValueSet(fullName: string, raw: any): GlobalValueSet {
+  const gvs: GlobalValueSet = {
+    fullName,
+    masterLabel: raw.label ?? raw.masterLabel ?? fullName,
+    sorted: raw.sorted ?? false,
+  };
+  if (raw.description !== undefined) gvs.description = raw.description;
+
+  const values = raw.values ?? [];
+  gvs.customValue = values.map((v: any) => ({
+    fullName: v.fullName,
+    default: v.default ?? false,
+    label: v.label ?? v.fullName,
+  }));
+
+  return gvs;
 }
 
 /** Derive a default object filename for emit output. */

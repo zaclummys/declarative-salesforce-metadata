@@ -1,0 +1,33 @@
+# Global value set (global picklist): a reusable list of picklist values defined
+# once at the top level, then referenced by any picklist field via `valueSetName`
+# instead of declaring the values inline. Defining it and using it can live in the
+# same file or different files — the directory is merged into one model.
+globalValueSets:
+  Industry:
+    label: Industry                  # → masterLabel
+    description: Shared industry classification
+    values:
+      - fullName: Technology
+        label: Technology
+        default: true
+      - fullName: Finance
+        label: Finance
+      - fullName: Retail
+        label: Retail
+
+objects:
+  Partner__c:
+    label: Partner
+    pluralLabel: Partners
+    nameField:
+      fullName: Name
+      label: Partner Name
+      type: Text
+    fields:
+      # References the global value set instead of listing values inline.
+      Industry__c:
+        label: Industry
+        type: Picklist
+        valueSet:
+          valueSetName: Industry
+          restricted: true

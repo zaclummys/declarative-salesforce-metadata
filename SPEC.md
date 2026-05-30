@@ -141,9 +141,54 @@ valueSet:
       label: Sent
 ```
 
+A picklist's values come from **either** an inline `values:` list **or** a
+reference to a [global value set](#global-value-sets) via `valueSetName:` —
+exactly one of the two:
+
+```yaml
+valueSet:
+  valueSetName: Industry  # use a shared global value set instead of inline values
+  restricted: true        # optional
+```
+
+## Global value sets
+
+A global value set (a.k.a. global picklist) is a reusable list of picklist
+values defined **once** and referenced by name from any number of picklist
+fields — instead of each field repeating the values inline. It is a top-level
+component, so it is declared under a top-level `globalValueSets:` map (which may
+appear in its own file or alongside `objects:`), keyed by API name:
+
+```yaml
+globalValueSets:
+  Industry:
+    label: Industry             # → masterLabel
+    sorted: false               # optional, default false
+    description: Shared industry classification
+    values:
+      - fullName: Technology
+        label: Technology
+        default: true
+      - fullName: Finance
+        label: Finance
+```
+
+A picklist field then references it with `valueSet.valueSetName` (see
+[valueSet](#valueset-picklists) above). The generated component lands beside
+`objects/`:
+
+```
+force-app/main/default/globalValueSets/Industry.globalValueSet-meta.xml
+```
+
+Anchored on the official `GlobalValueSet` type (`@salesforce/types/metadata`):
+the friendly `label` becomes `masterLabel` and `values:` becomes `customValue[]`
+(same friendly authoring as an inline picklist). A field's `valueSetName` must
+resolve to a global value set defined in the model — checked by `dsfm validate`.
+
 ## Example — full object (per-file form)
 
-`objects/Invoice__c.yaml`:
+`single-object.yaml`:
 
 ```yaml
 fullName: Invoice__c
@@ -335,13 +380,14 @@ Current examples:
 
 | File | Demonstrates |
 |------|--------------|
-| `examples/objects/Invoice__c.yaml` | Per-object file layout; common field types |
+| `examples/single-object.yaml` | Single-object (per-file) layout; common field types |
 | `examples/master-detail.yaml` | Explicit master-detail (hand-wired MasterDetail field) |
 | `examples/nested-details.yaml` | Master-detail via `details:` nesting |
 | `examples/history-tracking.yaml` | Field history tracking + `enableHistory` auto-wiring |
 | `examples/object-features.yaml` | Object feature toggles (`enableReports`, etc.) |
 | `examples/standard-object.yaml` | Adding custom fields to a standard object (`Account`) |
 | `examples/record-types.yaml` | Record types that restrict picklist values per variant |
+| `examples/global-value-set.yaml` | A global value set referenced by a picklist field |
 
 ## Record types
 
@@ -431,11 +477,15 @@ Account__c:
   (`*.object-meta.xml` / `*.field-meta.xml`) into a Salesforce DX source tree.
   The user deploys with `sf project deploy start`. The CLI is a generator, not a
   deployer.
-- **Future deploy command:** use
-  [`@salesforce/source-deploy-retrieve`](https://www.npmjs.com/package/@salesforce/source-deploy-retrieve)
-  (`ComponentSet.fromSource` + `MetadataApiDeploy`) plus `@salesforce/core` for
-  auth — a programmatic deploy with no dependency on the `sf` CLI, reusing the
-  same generated source tree.
+- **A built-in deploy command is deprioritized — not a near-term goal.** The CLI
+  stays a generator; deployment is the user's hand-off via `sf project deploy
+  start`. Effort goes into broadening *what we can generate* (validation rules,
+  formula fields, etc.) rather than into deploying it.
+  - *If* it is ever revisited, the approach is settled:
+    [`@salesforce/source-deploy-retrieve`](https://www.npmjs.com/package/@salesforce/source-deploy-retrieve)
+    (`ComponentSet.fromSource` + `MetadataApiDeploy`) plus `@salesforce/core` for
+    auth — a programmatic deploy with no dependency on the `sf` CLI, reusing the
+    same generated source tree.
 
 ### Testing & deploy verification
 
@@ -482,7 +532,8 @@ force-app/main/default/objects/
 
 - `generate` — YAML -> source XML.
 - `validate` — parse + validate only, no output.
-- (later) `deploy` — shell out to `sf project deploy start`.
+- `deploy` — **deprioritized** (see Implementation). The user deploys the
+  generated source tree with `sf project deploy start`.
 
 ## Open / undecided
 
