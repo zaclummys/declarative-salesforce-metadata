@@ -45,6 +45,10 @@ function validateGlobalValueSets(model: Model, issues: ValidationIssue[]): Set<s
     const at = (msg: string) => issues.push({ path, message: msg });
     if (seen.has(gvs.fullName)) at("duplicate global value set fullName");
     seen.add(gvs.fullName);
+    // Salesforce names global value sets with a `__gvs` suffix (like `__c` for
+    // custom objects). Require it explicitly — otherwise the platform appends it
+    // silently and the deployed name won't match what fields reference.
+    if (!gvs.fullName.endsWith("__gvs")) at("API name must end with `__gvs`");
     if (!gvs.masterLabel) at("missing `label`");
     if ((gvs.customValue?.length ?? 0) === 0) at("must contain at least one value");
   }

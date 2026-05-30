@@ -62,6 +62,6 @@ Industry__c:
   label: Industry
   type: Picklist
   valueSet:
-    valueSetName: Industry   # a shared global value set
+    valueSetName: Industry__gvs   # a shared global value set
     restricted: true
 ```

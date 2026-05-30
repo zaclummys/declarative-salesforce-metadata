@@ -13,8 +13,8 @@ map (in its own file or alongside `objects:`), keyed by API name:
 
 ```yaml
 globalValueSets:
-  Industry:
-    label: Industry             # → masterLabel
+  Industry__gvs:                # API name carries the `__gvs` suffix
+    label: Industry             # → masterLabel (human label, no suffix)
     sorted: false               # optional, default false
     description: Shared industry classification
     values:
@@ -27,8 +27,8 @@ globalValueSets:
         label: Retail
 ```
 
-This generates `globalValueSets/Industry.globalValueSet-meta.xml`, a sibling of
-`objects/`:
+This generates `globalValueSets/Industry__gvs.globalValueSet-meta.xml`, a sibling
+of `objects/`:
 
 ```xml
 <GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
@@ -53,7 +53,7 @@ Industry__c:
   label: Industry
   type: Picklist
   valueSet:
-    valueSetName: Industry
+    valueSetName: Industry__gvs
     restricted: true          # optional
 ```
 
@@ -68,6 +68,9 @@ Industry__c:
 
 ## Rules
 
+- The API name **must end in `__gvs`** (the same explicit, no-auto-suffix rule
+  as `__c` for custom objects). Salesforce appends `__gvs` itself if you omit it,
+  silently breaking the name your fields reference, so `dsfm validate` requires it.
 - The friendly `label` becomes `masterLabel`; `values:` becomes `customValue[]`.
 - A field's `valueSetName` must resolve to a global value set defined in the
   model — checked by `dsfm validate`.
