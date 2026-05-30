@@ -58,6 +58,47 @@ function validateObject(obj: SObject, issues: ValidationIssue[]): void {
     seenFields.add(field.fullName);
     validateField(field, fieldPath, issues);
   }
+
+  validateRecordTypes(obj, issues);
+}
+
+/**
+ * A record type's `picklists:` references must resolve to real picklist fields
+ * on the object and to values that actually exist in those fields' value sets.
+ */
+function validateRecordTypes(obj: SObject, issues: ValidationIssue[]): void {
+  if (!obj.recordTypes?.length) return;
+
+  // Map each picklist field to the set of values it defines.
+  const picklistValues = new Map<string, Set<string>>();
+  for (const field of obj.fields) {
+    if (field.type !== "Picklist" && field.type !== "MultiselectPicklist") continue;
+    const values = field.valueSet?.valueSetDefinition?.value ?? [];
+    picklistValues.set(field.fullName, new Set(values.map((v) => v?.fullName as string)));
+  }
+
+  const seen = new Set<string>();
+  for (const rt of obj.recordTypes) {
+    const rtPath = `${obj.fullName}.recordTypes.${rt.fullName}`;
+    const at = (msg: string) => issues.push({ path: rtPath, message: msg });
+    if (seen.has(rt.fullName)) at("duplicate record type fullName");
+    seen.add(rt.fullName);
+    if (!rt.label) at("missing `label`");
+
+    for (const pv of rt.picklistValues ?? []) {
+      const field = pv?.picklist as string;
+      const defined = picklistValues.get(field);
+      if (!defined) {
+        at(`picklist \`${field}\` is not a picklist field on this object`);
+        continue;
+      }
+      for (const v of pv?.values ?? []) {
+        if (!defined.has(v?.fullName as string)) {
+          at(`picklist \`${field}\` has no value \`${v?.fullName}\``);
+        }
+      }
+    }
+  }
 }
 
 function validateField(field: Field, path: string, issues: ValidationIssue[]): void {

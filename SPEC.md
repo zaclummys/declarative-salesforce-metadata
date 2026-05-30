@@ -15,6 +15,12 @@ this first version: **custom objects** and **custom fields** only.
    authored files or examples — block style throughout for readable diffs.
 4. **Type-driven validation.** A field's `type` determines which type-specific
    keys are valid/required. The tool validates before generating anything.
+5. **Lean on official `@salesforce/*` packages.** Before building anything,
+   review what the official packages already provide and reuse it rather than
+   reinventing it — `@salesforce/types` for authoritative metadata shapes and
+   enums, `@salesforce/source-deploy-retrieve` for source/deploy, `@salesforce/core`
+   for auth. Revisit this periodically: these packages evolve, and new releases
+   may subsume code we currently maintain by hand.
 
 ## File layout
 
@@ -335,40 +341,45 @@ Current examples:
 | `examples/history-tracking.yaml` | Field history tracking + `enableHistory` auto-wiring |
 | `examples/object-features.yaml` | Object feature toggles (`enableReports`, etc.) |
 | `examples/standard-object.yaml` | Adding custom fields to a standard object (`Account`) |
+| `examples/record-types.yaml` | Record types that restrict picklist values per variant |
 
-## Record types (planned — not yet implemented)
+## Record types
 
-Record types are a new metadata type beyond the current objects+fields scope.
-Design is settled but unbuilt; no example exists yet (examples are only added for
-implemented features).
-
-A `RecordType` is a decomposed child of the object in source format:
+A record type is a named object variant that can be assigned to users and that
+**restricts which picklist values are available** (and picks a per-record-type
+default). It is a decomposed child of the object in source format:
 
 ```
 objects/Account__c/recordTypes/Enterprise.recordType-meta.xml
 ```
 
-so it nests under the object the same way `details:` does. Its purpose is a named
-object variant that can be assigned to users and that **restricts which picklist
-values are available** (and their per-record-type defaults).
-
-### Proposed YAML
+so it nests under the object the same way `details:` does. Declare record types
+with a `recordTypes:` map keyed by API name:
 
 ```yaml
 Account__c:
   fields:
     Segment__c:
       type: Picklist
-      values: [SMB, MidMarket, Enterprise]
+      valueSet:
+        values:
+          - fullName: SMB
+            label: SMB
+          - fullName: MidMarket
+            label: Mid-Market
+          - fullName: Enterprise
+            label: Enterprise
   recordTypes:
     SMB:
       label: SMB
+      description: Small and mid-size business accounts   # optional
+      active: true                                        # optional, default true
       picklists:
         Segment__c: [SMB]                  # values available for this record type
     Enterprise:
       label: Enterprise
       picklists:
-        Segment__c: [MidMarket, Enterprise]
+        Segment__c: [Enterprise, MidMarket]  # first listed becomes the default
 ```
 
 ### Generates
@@ -378,33 +389,34 @@ Account__c:
 ```xml
 <RecordType xmlns="http://soap.sforce.com/2006/04/metadata">
     <active>true</active>
+    <fullName>SMB</fullName>
     <label>SMB</label>
     <picklistValues>
         <picklist>Segment__c</picklist>
         <values>
-            <fullName>SMB</fullName>
             <default>true</default>
+            <fullName>SMB</fullName>
         </values>
     </picklistValues>
 </RecordType>
 ```
 
-### Design notes
+### Rules and derivations
 
-- **Anchor on the official `RecordType` type** (`@salesforce/types/metadata`):
-  `{ active, label, businessProcess?, description?, picklistValues[] }`.
-- **Emit path** mirrors `fields/` — a `recordTypes/` subfolder under the object,
-  so the emitter change is small.
-- **Derivations:** `active` defaults to `true`; an omitted picklist means all
-  values available (Salesforce default), so you only declare *restrictions*; the
-  per-record-type default value is derivable (first listed, or an explicit marker).
+- **Anchored on the official `RecordType` type** (`@salesforce/types/metadata`):
+  `{ active, label, businessProcess?, description?, picklistValues[] }`. The
+  friendly `picklists:` form expands into `picklistValues[]`.
+- **Emit path** mirrors `fields/` — a `recordTypes/` subfolder under the object.
+- **`active`** defaults to `true`. An omitted picklist means all values are
+  available (the Salesforce default), so you only declare *restrictions*. The
+  **first value listed** in a `picklists:` entry becomes the record type's default.
+- **Validation:** a record type's `picklists:` references must resolve to real
+  picklist fields on the object and to values that exist in those fields.
 - **`businessProcess`:** standard objects (Opportunity, Case, Lead, Solution)
-  require one; custom objects don't. Initial support targets custom objects and
-  skips business processes.
+  require one; custom objects don't. Support currently targets custom objects and
+  does not emit business processes.
 - **Out of scope:** assigning record types to users is `Profile`/`PermissionSet`
   metadata; the RecordType only defines availability.
-- **Validation hook:** a record type's `picklists:` references must resolve to
-  real picklist fields on the object and to values that exist.
 
 ## Implementation
 
@@ -479,4 +491,5 @@ force-app/main/default/objects/
   types (`__mdt`, `__e`, `__b`), which are currently treated as standard.
 - Field deletion / destructive changes semantics.
 - Output directory configurability (default `force-app/main/default`).
-- Record types — design settled (see "Record types (planned)"), not yet built.
+- Record types — implemented for custom objects (see "Record types"). Still open:
+  business processes and standard-object record types.

@@ -40,6 +40,16 @@ export function emit(model: Model, outDir: string): EmitResult {
       writeFileSync(fieldFile, fieldXml(field));
       files.push(fieldFile);
     }
+
+    // Record types are decomposed children, mirroring `fields/`: each lands in
+    // its own file under a `recordTypes/` subfolder of the object.
+    for (const rt of obj.recordTypes ?? []) {
+      const rtDir = join(objDir, "recordTypes");
+      mkdirSync(rtDir, { recursive: true });
+      const rtFile = join(rtDir, `${rt.fullName}.recordType-meta.xml`);
+      writeFileSync(rtFile, document("RecordType", rt));
+      files.push(rtFile);
+    }
   }
 
   return { files };
@@ -51,9 +61,9 @@ export function emit(model: Model, outDir: string): EmitResult {
  * their own files, so they are omitted from the object XML.
  */
 function objectXml(obj: SObject): string {
-  // In source format the folder name carries the API name, and fields live in
-  // their own files — so both are omitted from the object XML body.
-  const { fields, fullName, ...objectBody } = obj;
+  // In source format the folder name carries the API name, and fields and record
+  // types live in their own files — so all are omitted from the object XML body.
+  const { fields, fullName, recordTypes, ...objectBody } = obj;
   return document("CustomObject", objectBody);
 }
 

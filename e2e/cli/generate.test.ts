@@ -114,6 +114,27 @@ describe("dsfm generate — filesystem output", () => {
     expect(objXml).toContain("<enableSearch>true</enableSearch>");
   });
 
+  it("emits record types into a recordTypes/ subfolder", () => {
+    const dest = join(outDir, "recordtypes");
+    const r = dsfm(["generate", "examples/record-types.yaml", "-o", dest]);
+    expect(r.status).toBe(0);
+
+    const objDir = join(dest, "objects", "Account__c");
+    const rtPath = join(objDir, "recordTypes", "Enterprise.recordType-meta.xml");
+    expect(existsSync(rtPath)).toBe(true);
+
+    const rtXml = readFileSync(rtPath, "utf8");
+    expect(rtXml).toContain("<RecordType");
+    expect(rtXml).toContain("<active>true</active>");
+    expect(rtXml).toContain("<picklist>Segment__c</picklist>");
+    // First value listed becomes the record type's default.
+    expect(rtXml).toContain("<fullName>Enterprise</fullName>");
+
+    // Record types are decomposed children — never inlined into the object XML.
+    const objXml = readFileSync(join(objDir, "Account__c.object-meta.xml"), "utf8");
+    expect(objXml).not.toContain("<recordTypes>");
+  });
+
   it("emits only fields for a standard object (no object-meta.xml)", () => {
     const dest = join(outDir, "standard");
     const r = dsfm(["generate", "examples/standard-object.yaml", "-o", dest]);

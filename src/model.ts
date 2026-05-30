@@ -11,6 +11,7 @@
 import type {
   CustomObject as SfCustomObject,
   CustomField as SfCustomField,
+  RecordType as SfRecordType,
   FieldType,
 } from "@salesforce/types/metadata";
 
@@ -36,6 +37,12 @@ export type NameField = DeepPartial<SfCustomField> & {
   type: FieldType;
 };
 
+/** A record type — official `RecordType`, with the keys we always set required. */
+export type RecordType = DeepPartial<SfRecordType> & {
+  fullName: string;
+  label: string;
+};
+
 /** A custom object — official `CustomObject`, relaxed for hand construction. */
 export type SObject = DeepPartial<SfCustomObject> & {
   fullName: string;
@@ -43,6 +50,7 @@ export type SObject = DeepPartial<SfCustomObject> & {
   pluralLabel: string;
   fields: Field[];
   nameField?: NameField;
+  recordTypes?: RecordType[];
 };
 
 export interface Model {
