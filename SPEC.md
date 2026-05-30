@@ -432,16 +432,17 @@ Two layers of end-to-end checks live under `e2e/`:
 - **`e2e/cli/`** — CLI end-to-end tests (vitest) that run `dsfm` as a subprocess
   and assert on the generated files on disk. No org required; part of `npm test`
   (and `npm run test:e2e`). These run in CI on every push.
-- **`e2e/deploy/`** — an isolated SFDX project. Generated XML is only trustworthy
-  if Salesforce accepts it, so CI generates each example into
-  `e2e/deploy/force-app` and runs a **check-only deploy**
-  (`sf project deploy validate`), confirming acceptance without persisting
-  anything. `e2e/deploy/sfdx-project.json` pins the `sourceApiVersion`.
+- **Deploy verification** — generated XML is only trustworthy if Salesforce
+  accepts it. `scripts/verify-deploy.sh` scaffolds a throwaway SFDX project with
+  `sf project generate` (nothing Salesforce-specific is committed), generates the
+  whole `examples/` model into it, and runs a **check-only deploy**
+  (`sf project deploy start --dry-run`) — confirming acceptance without
+  persisting anything. The project's `--api-version` pins the `sourceApiVersion`.
 
 - Local/CI deploy runner: `scripts/verify-deploy.sh <org>` (or `npm run verify:deploy -- <org>`).
 - CI: `.github/workflows/ci.yml` always runs build + tests; the deploy job runs
-  only when an `SFDX_AUTH_URL` secret is configured, spinning up a scratch org,
-  verifying every example, and tearing it down.
+  only when an `SFDX_AUTH_URL` secret is configured, authenticating that org and
+  running the check-only deploy directly against it (no Dev Hub / scratch org).
 
 ### Pipeline
 

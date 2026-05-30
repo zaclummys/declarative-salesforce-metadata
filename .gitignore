@@ -4,9 +4,6 @@ build/
 *.log
 .DS_Store
 
-# Generated Salesforce source (deploy-verification output)
-e2e/deploy/force-app/
-
 # Salesforce CLI local state
 .sf/
 .sfdx/
