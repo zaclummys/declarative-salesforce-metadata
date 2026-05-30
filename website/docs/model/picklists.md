@@ -50,3 +50,18 @@ Notes:
 - A value's `label` defaults to its `fullName` if omitted.
 - `default: true` on one value marks the picklist default.
 - `MultiselectPicklist` uses the same `valueSet` form.
+
+## Reusing values across fields
+
+To share one list of values across many fields, define a
+[global value set](/features/global-value-sets) and reference it by name instead
+of listing values inline:
+
+```yaml
+Industry__c:
+  label: Industry
+  type: Picklist
+  valueSet:
+    valueSetName: Industry   # a shared global value set
+    restricted: true
+```

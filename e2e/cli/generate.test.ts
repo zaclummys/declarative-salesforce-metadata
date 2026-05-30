@@ -135,6 +135,27 @@ describe("dsfm generate — filesystem output", () => {
     expect(objXml).not.toContain("<recordTypes>");
   });
 
+  it("emits a global value set and references it from a field", () => {
+    const dest = join(outDir, "gvs");
+    const r = dsfm(["generate", "examples/global-value-set.yaml", "-o", dest]);
+    expect(r.status).toBe(0);
+
+    const gvsPath = join(dest, "globalValueSets", "Industry.globalValueSet-meta.xml");
+    expect(existsSync(gvsPath)).toBe(true);
+    const gvsXml = readFileSync(gvsPath, "utf8");
+    expect(gvsXml).toContain("<GlobalValueSet");
+    expect(gvsXml).toContain("<masterLabel>Industry</masterLabel>");
+    expect(gvsXml).toContain("<fullName>Technology</fullName>");
+
+    // The picklist field references the set by name, with no inline values.
+    const fieldXml = readFileSync(
+      join(dest, "objects", "Partner__c", "fields", "Industry__c.field-meta.xml"),
+      "utf8"
+    );
+    expect(fieldXml).toContain("<valueSetName>Industry</valueSetName>");
+    expect(fieldXml).not.toContain("<valueSetDefinition>");
+  });
+
   it("emits only fields for a standard object (no object-meta.xml)", () => {
     const dest = join(outDir, "standard");
     const r = dsfm(["generate", "examples/standard-object.yaml", "-o", dest]);

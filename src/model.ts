@@ -12,6 +12,7 @@ import type {
   CustomObject as SfCustomObject,
   CustomField as SfCustomField,
   RecordType as SfRecordType,
+  GlobalValueSet as SfGlobalValueSet,
   FieldType,
 } from "@salesforce/types/metadata";
 
@@ -53,8 +54,19 @@ export type SObject = DeepPartial<SfCustomObject> & {
   recordTypes?: RecordType[];
 };
 
+/**
+ * A global value set (a.k.a. global picklist) — official `GlobalValueSet`. A
+ * reusable list of values defined once and referenced by picklist fields via
+ * `valueSet.valueSetName`, instead of each field declaring its values inline.
+ */
+export type GlobalValueSet = DeepPartial<SfGlobalValueSet> & {
+  fullName: string;
+  masterLabel: string;
+};
+
 export interface Model {
   objects: SObject[];
+  globalValueSets: GlobalValueSet[];
 }
 
 /**
