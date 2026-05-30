@@ -32,8 +32,10 @@ jobs:
       - run: npm ci
 
       # Deploy verification needs an org. It runs only when SFDX_AUTH_URL is
-      # configured (a Dev Hub auth URL secret); otherwise it is skipped so forks
-      # and secret-less runs stay green.
+      # configured (any org's auth URL); otherwise it is skipped so forks and
+      # secret-less runs stay green. The check is a non-persisting (check-only)
+      # deploy, so it runs directly against the authed org — no Dev Hub or
+      # scratch org required.
       - name: Check for org auth secret
         id: guard
         env:
@@ -50,23 +52,14 @@ jobs:
         if: steps.guard.outputs.has_auth == 'true'
         run: npm install --global @salesforce/cli
 
-      - name: Authenticate Dev Hub
+      - name: Authenticate org
         if: steps.guard.outputs.has_auth == 'true'
         env:
           SFDX_AUTH_URL: ${{ secrets.SFDX_AUTH_URL }}
         run: |
           printf '%s' "${SFDX_AUTH_URL}" > /tmp/sfdx-auth.txt
-          sf org login sfdx-url --sfdx-url-file /tmp/sfdx-auth.txt --set-default-dev-hub --alias devhub
-
-      - name: Create scratch org
-        if: steps.guard.outputs.has_auth == 'true'
-        working-directory: e2e/deploy
-        run: sf org create scratch --definition-file config/project-scratch-def.json --alias ci-scratch --duration-days 1 --wait 30
+          sf org login sfdx-url --sfdx-url-file /tmp/sfdx-auth.txt --set-default --alias ci-org
 
       - name: Verify deploys (check-only)
         if: steps.guard.outputs.has_auth == 'true'
-        run: bash scripts/verify-deploy.sh ci-scratch
-
-      - name: Delete scratch org
-        if: always() && steps.guard.outputs.has_auth == 'true'
-        run: sf org delete scratch --target-org ci-scratch --no-prompt || true
+        run: bash scripts/verify-deploy.sh ci-org
