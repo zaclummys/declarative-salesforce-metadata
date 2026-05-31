@@ -473,11 +473,6 @@ Account__c:
 ## Implementation
 
 - **Language / runtime:** TypeScript on Node.
-- **Imports / aliases:** shared modules under `src/` are imported via the `@/*`
-  path alias (e.g. `@/parser.js`) instead of deep `../../` paths; command-local
-  modules stay relative. `tsx` and `tsc` resolve the alias from `tsconfig`
-  `paths`; the build is `tsc && tsc-alias`, where `tsc-alias` rewrites `@/` to
-  relative paths in `dist/` so the published output runs on plain Node.
 - **Model types:** the in-memory model is anchored on the official
   [`@salesforce/types`](https://www.npmjs.com/package/@salesforce/types)
   (`./metadata` subpath) `CustomObject` / `CustomField` types, generated from
