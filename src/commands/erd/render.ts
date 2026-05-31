@@ -11,7 +11,7 @@
  *   Parent ||--o{ Child : relationship   (MasterDetail — identifying)
  *   Parent ||..o{ Child : relationship   (Lookup — non-identifying)
  */
-import type { Field, Model, SObject } from "./model.js";
+import type { Field, Model, SObject } from "../../model.js";
 
 interface Relationship {
   parent: string;
