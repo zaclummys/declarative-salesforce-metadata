@@ -1,6 +1,6 @@
 import type { Command } from "commander";
-import { validate } from "../validator.js";
-import { load } from "./shared.js";
+import { validate } from "../../validator.js";
+import { load } from "../shared.js";
 
 export function registerValidate(program: Command): void {
   program

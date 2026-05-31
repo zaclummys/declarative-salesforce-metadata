@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { registerValidate } from "./commands/validate.js";
-import { registerGenerate } from "./commands/generate.js";
-import { registerErd } from "./commands/erd.js";
-import { registerConvert } from "./commands/convert.js";
+import { registerValidate } from "./commands/validate/index.js";
+import { registerGenerate } from "./commands/generate/index.js";
+import { registerErd } from "./commands/erd/index.js";
+import { registerConvert } from "./commands/convert/index.js";
 
 const program = new Command();
 

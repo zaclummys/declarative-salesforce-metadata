@@ -1,7 +1,7 @@
 import type { Command } from "commander";
 import { writeFileSync } from "node:fs";
-import { renderErd, fetchErdImage, type ErdFormat } from "../erd.js";
-import { load } from "./shared.js";
+import { renderErd, fetchErdImage, type ErdFormat } from "./render.js";
+import { load } from "../shared.js";
 
 export function registerErd(program: Command): void {
   program

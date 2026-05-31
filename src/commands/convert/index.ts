@@ -1,8 +1,8 @@
 import type { Command } from "commander";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { ParseError } from "../parser.js";
-import { readSource, combinedYaml, splitYaml } from "../converter.js";
+import { ParseError } from "../../parser.js";
+import { readSource, combinedYaml, splitYaml } from "./converter.js";
 
 export function registerConvert(program: Command): void {
   program
