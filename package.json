@@ -10,7 +10,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "test": "vitest run --passWithNoTests",
@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.9.0",
+    "tsc-alias": "^1.8.17",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
