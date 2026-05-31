@@ -538,6 +538,8 @@ force-app/main/default/objects/
 
 - `generate` — YAML -> source XML.
 - `validate` — parse + validate only, no output.
+- `erd` — render the model as a Mermaid ER diagram (objects as entities,
+  Lookup/MasterDetail fields as edges). Prints to stdout or `--out <file>`.
 - `deploy` — **deprioritized** (see Implementation). The user deploys the
   generated source tree with `sf project deploy start`.
 

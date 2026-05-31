@@ -3,7 +3,9 @@ import { Command } from "commander";
 import { loadModel, ParseError } from "./parser.js";
 import { validate } from "./validator.js";
 import { emit } from "./emitter.js";
+import { renderErd } from "./erd.js";
 import { watchModel } from "./watch.js";
+import { writeFileSync } from "node:fs";
 
 const program = new Command();
 
@@ -57,6 +59,21 @@ program
     };
     process.on("SIGINT", shutdown);
     process.on("SIGTERM", shutdown);
+  });
+
+program
+  .command("erd")
+  .description("Render the model as a Mermaid entity-relationship diagram.")
+  .argument("<input>", "model directory or single YAML file")
+  .option("-o, --out <file>", "write the diagram to a file instead of stdout")
+  .action((input: string, opts: { out?: string }) => {
+    const diagram = renderErd(load(input));
+    if (opts.out) {
+      writeFileSync(opts.out, diagram);
+      console.log(`✓ wrote diagram to ${opts.out}`);
+    } else {
+      process.stdout.write(diagram);
+    }
   });
 
 /**
