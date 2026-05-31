@@ -45,6 +45,10 @@ dsfm validate examples
 # Generate Salesforce source XML
 dsfm generate examples --out force-app/main/default
 
+# Convert an existing source tree back into a YAML model (inverse of generate)
+dsfm convert force-app/main/default                 # combined YAML to stdout
+dsfm convert force-app/main/default --out model     # one file per object under model/
+
 # Regenerate automatically while editing the model
 dsfm generate examples --out force-app/main/default --watch
 
@@ -67,6 +71,7 @@ file) or a single YAML file with a top-level `objects:` map.
 |---------|-------------|
 | `dsfm validate <input>` | Parse and validate the YAML model without writing output. Exits non-zero on errors. |
 | `dsfm generate <input> [--out <dir>] [--watch]` | Generate Salesforce source XML from the model. `--out` defaults to `force-app/main/default`. `--watch` (`-w`) regenerates on every change. |
+| `dsfm convert <source> [--out <dir>]` | Convert a Salesforce source tree (the `objects/` layout) back into a YAML model — the inverse of `generate`. Prints a combined model to stdout, or writes one file per object to `--out` (`-o`). Round-trips: re-generating the output reproduces the same source. |
 | `dsfm erd <input> [--out <file>] [--format <fmt>]` | Render the model as a [Mermaid](https://mermaid.js.org/) ER diagram. Lookups are dashed edges, master-detail solid. `--format` (`-f`) is `mmd` (text, default), `svg`, or `png` — inferred from the `--out` extension if omitted. `svg`/`png` are rendered via the public [mermaid.ink](https://mermaid.ink) service (needs network; sends object/field names to a third party) and require `--out`. |
 | `dsfm --help` | Show usage. |
 | `dsfm --version` | Print the CLI version. |

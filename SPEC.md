@@ -537,6 +537,13 @@ force-app/main/default/objects/
 ### Likely CLI surface
 
 - `generate` — YAML -> source XML.
+- `convert` — source XML -> YAML model (inverse of `generate`). Reads the
+  `objects/` layout and reverses the friendly transformations the parser
+  applies (inline picklists, record-type `picklists:`, global value sets), so
+  the output round-trips: re-generating it reproduces the same source.
+  Master-detail relationships are emitted as explicit MasterDetail fields, not
+  `details:` nesting. Prints a combined model to stdout or writes one file per
+  object to `--out`.
 - `validate` — parse + validate only, no output.
 - `erd` — render the model as a Mermaid ER diagram (objects as entities,
   Lookup/MasterDetail fields as edges). `--format mmd` (default) prints the
