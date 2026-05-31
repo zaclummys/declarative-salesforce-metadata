@@ -7,3 +7,4 @@ build/
 # Salesforce CLI local state
 .sf/
 .sfdx/
+model.png

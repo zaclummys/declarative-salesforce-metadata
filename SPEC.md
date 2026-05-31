@@ -537,7 +537,19 @@ force-app/main/default/objects/
 ### Likely CLI surface
 
 - `generate` — YAML -> source XML.
+- `convert` — source XML -> YAML model (inverse of `generate`). Reads the
+  `objects/` layout and reverses the friendly transformations the parser
+  applies (inline picklists, record-type `picklists:`, global value sets), so
+  the output round-trips: re-generating it reproduces the same source.
+  Master-detail relationships are emitted as explicit MasterDetail fields, not
+  `details:` nesting. Prints a combined model to stdout or writes one file per
+  object to `--out`.
 - `validate` — parse + validate only, no output.
+- `erd` — render the model as a Mermaid ER diagram (objects as entities,
+  Lookup/MasterDetail fields as edges). `--format mmd` (default) prints the
+  Mermaid text; `--format svg|png` renders an image via the public mermaid.ink
+  service (network required; the schema is sent to a third party) and writes it
+  to `--out`. Format is inferred from the `--out` extension when omitted.
 - `deploy` — **deprioritized** (see Implementation). The user deploys the
   generated source tree with `sf project deploy start`.
 
