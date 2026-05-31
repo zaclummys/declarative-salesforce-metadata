@@ -12,7 +12,7 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { join, dirname, basename } from "node:path";
 import { XMLParser } from "fast-xml-parser";
 import { stringify as stringifyYaml } from "yaml";
-import { ParseError } from "@/parser.js";
+import { ParseError } from "../../parser.js";
 
 /** Tags that repeat in the metadata XML and must always parse as arrays. */
 const ARRAY_TAGS = new Set(["value", "values", "picklistValues", "customValue"]);

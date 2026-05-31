@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { XMLBuilder } from "fast-xml-parser";
-import { isCustomObject, type Field, type GlobalValueSet, type Model, type SObject } from "@/model.js";
+import { isCustomObject, type Field, type GlobalValueSet, type Model, type SObject } from "../../model.js";
 
 const XMLNS = "http://soap.sforce.com/2006/04/metadata";
 

@@ -1,4 +1,4 @@
-import { loadModel, ParseError } from "@/parser.js";
+import { loadModel, ParseError } from "../parser.js";
 
 /**
  * Load a model from a path, printing parse errors and exiting non-zero. For
