@@ -105,8 +105,12 @@ export type ErdFormat = "mmd" | "svg" | "png";
  */
 export async function fetchErdImage(model: Model, format: "svg" | "png"): Promise<Buffer> {
   const encoded = Buffer.from(renderErd(model), "utf8").toString("base64url");
-  const path = format === "svg" ? "svg" : "img"; // mermaid.ink serves PNG from /img
-  const url = `https://mermaid.ink/${path}/${encoded}`;
+  // mermaid.ink serves vector from /svg and raster from /img; /img defaults to
+  // JPEG, so request PNG explicitly with `?type=png`.
+  const url =
+    format === "svg"
+      ? `https://mermaid.ink/svg/${encoded}`
+      : `https://mermaid.ink/img/${encoded}?type=png`;
 
   const res = await fetch(url);
   if (!res.ok) {

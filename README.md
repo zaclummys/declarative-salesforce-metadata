@@ -73,6 +73,17 @@ file) or a single YAML file with a top-level `objects:` map.
 
 Run `dsfm <command> --help` for command-specific options.
 
+### `dsfm erd` behind a corporate proxy
+
+Rendering `svg`/`png` fetches from `mermaid.ink` over HTTPS. On a managed laptop
+with a TLS-inspecting proxy, Node may not trust the proxy's root CA and fail with
+`UNABLE_TO_GET_ISSUER_CERT_LOCALLY`. The CA is usually already in the macOS
+keychain — tell Node to use it:
+
+```sh
+NODE_OPTIONS=--use-system-ca dsfm erd examples -o model.png
+```
+
 ## Model format (short version)
 
 ```yaml

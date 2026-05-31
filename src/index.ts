@@ -95,7 +95,14 @@ program
     try {
       image = await fetchErdImage(model, format);
     } catch (err) {
+      const cause = (err as { cause?: { code?: string } }).cause;
       console.error(`✗ could not render ${format} via mermaid.ink: ${(err as Error).message}`);
+      if (cause?.code) console.error(`  cause: ${cause.code}`);
+      // A TLS chain error usually means a corporate proxy whose root CA Node
+      // doesn't trust by default — point at the system keychain.
+      if (cause?.code?.includes("CERT") || cause?.code?.includes("ISSUER")) {
+        console.error("  hint: behind a TLS-inspecting proxy? retry with NODE_OPTIONS=--use-system-ca");
+      }
       process.exit(1);
     }
     writeFileSync(opts.out, image);
