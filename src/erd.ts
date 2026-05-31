@@ -93,3 +93,24 @@ function attrName(name: string): string {
 function quoteLabel(label: string): string {
   return `"${label.replace(/"/g, "")}"`;
 }
+
+export type ErdFormat = "mmd" | "svg" | "png";
+
+/**
+ * Render the diagram to an image by delegating to the public mermaid.ink
+ * service: the diagram source is base64url-encoded into the request path and
+ * the rendered bytes come back in the response. Note this sends the model's
+ * object and field names to a third-party host; use `mmd` (text) for offline
+ * or private models.
+ */
+export async function fetchErdImage(model: Model, format: "svg" | "png"): Promise<Buffer> {
+  const encoded = Buffer.from(renderErd(model), "utf8").toString("base64url");
+  const path = format === "svg" ? "svg" : "img"; // mermaid.ink serves PNG from /img
+  const url = `https://mermaid.ink/${path}/${encoded}`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`mermaid.ink returned ${res.status} ${res.statusText} for ${url}`);
+  }
+  return Buffer.from(await res.arrayBuffer());
+}

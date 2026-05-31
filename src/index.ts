@@ -3,7 +3,7 @@ import { Command } from "commander";
 import { loadModel, ParseError } from "./parser.js";
 import { validate } from "./validator.js";
 import { emit } from "./emitter.js";
-import { renderErd } from "./erd.js";
+import { renderErd, fetchErdImage, type ErdFormat } from "./erd.js";
 import { watchModel } from "./watch.js";
 import { writeFileSync } from "node:fs";
 
@@ -65,15 +65,41 @@ program
   .command("erd")
   .description("Render the model as a Mermaid entity-relationship diagram.")
   .argument("<input>", "model directory or single YAML file")
-  .option("-o, --out <file>", "write the diagram to a file instead of stdout")
-  .action((input: string, opts: { out?: string }) => {
-    const diagram = renderErd(load(input));
-    if (opts.out) {
-      writeFileSync(opts.out, diagram);
-      console.log(`✓ wrote diagram to ${opts.out}`);
-    } else {
-      process.stdout.write(diagram);
+  .option("-o, --out <file>", "write to a file instead of stdout")
+  .option(
+    "-f, --format <format>",
+    "mmd (Mermaid text), svg, or png; inferred from --out extension if omitted"
+  )
+  .action(async (input: string, opts: { out?: string; format?: string }) => {
+    const format = resolveErdFormat(opts.format, opts.out);
+    const model = load(input);
+
+    if (format === "mmd") {
+      const diagram = renderErd(model);
+      if (opts.out) {
+        writeFileSync(opts.out, diagram);
+        console.log(`✓ wrote diagram to ${opts.out}`);
+      } else {
+        process.stdout.write(diagram);
+      }
+      return;
     }
+
+    // svg/png are rendered remotely (binary); require --out so we don't dump
+    // bytes onto a terminal, and so the user gets a clear destination.
+    if (!opts.out) {
+      console.error("✗ --out <file> is required when --format is svg or png");
+      process.exit(1);
+    }
+    let image;
+    try {
+      image = await fetchErdImage(model, format);
+    } catch (err) {
+      console.error(`✗ could not render ${format} via mermaid.ink: ${(err as Error).message}`);
+      process.exit(1);
+    }
+    writeFileSync(opts.out, image);
+    console.log(`✓ wrote diagram to ${opts.out}`);
   });
 
 /**
@@ -103,6 +129,21 @@ function generateOnce(input: string, out: string): boolean {
   const { files } = emit(model, out);
   console.log(`✓ wrote ${files.length} file(s) under ${out}`);
   return true;
+}
+
+/**
+ * Resolve the erd output format. An explicit `--format` wins; otherwise infer
+ * from the `--out` extension (`.svg`/`.png`), defaulting to Mermaid text.
+ */
+function resolveErdFormat(format: string | undefined, out: string | undefined): ErdFormat {
+  if (format) {
+    if (format === "mmd" || format === "svg" || format === "png") return format;
+    console.error(`✗ unknown --format '${format}' (expected mmd, svg, or png)`);
+    process.exit(1);
+  }
+  if (out?.endsWith(".svg")) return "svg";
+  if (out?.endsWith(".png")) return "png";
+  return "mmd";
 }
 
 function load(input: string) {

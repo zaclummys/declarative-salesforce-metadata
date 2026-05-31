@@ -58,4 +58,16 @@ describe("dsfm erd", () => {
     const r = dsfm(["erd", "examples/does-not-exist.yaml"]);
     expect(r.status).not.toBe(0);
   });
+
+  it("rejects an unknown --format", () => {
+    const r = dsfm(["erd", "examples/single-object.yaml", "-f", "gif"]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toContain("unknown --format");
+  });
+
+  it("requires --out for image formats", () => {
+    const r = dsfm(["erd", "examples/single-object.yaml", "-f", "png"]);
+    expect(r.status).not.toBe(0);
+    expect(r.stderr).toContain("--out");
+  });
 });

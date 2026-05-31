@@ -49,8 +49,10 @@ dsfm generate examples --out force-app/main/default
 dsfm generate examples --out force-app/main/default --watch
 
 # Render the model as a Mermaid entity-relationship diagram
-dsfm erd examples
-dsfm erd examples --out docs/model.mmd
+dsfm erd examples                          # Mermaid text to stdout
+dsfm erd examples --out docs/model.mmd     # Mermaid text to a file
+dsfm erd examples --out docs/model.svg     # rendered image (format from extension)
+dsfm erd examples --out docs/model.png --format png
 
 # Deploy the generated source with the Salesforce CLI
 sf project deploy start --source-dir force-app/main/default
@@ -65,7 +67,7 @@ file) or a single YAML file with a top-level `objects:` map.
 |---------|-------------|
 | `dsfm validate <input>` | Parse and validate the YAML model without writing output. Exits non-zero on errors. |
 | `dsfm generate <input> [--out <dir>] [--watch]` | Generate Salesforce source XML from the model. `--out` defaults to `force-app/main/default`. `--watch` (`-w`) regenerates on every change. |
-| `dsfm erd <input> [--out <file>]` | Render the model as a [Mermaid](https://mermaid.js.org/) ER diagram. Prints to stdout, or writes to `--out` (`-o`). Lookups are dashed edges, master-detail solid. |
+| `dsfm erd <input> [--out <file>] [--format <fmt>]` | Render the model as a [Mermaid](https://mermaid.js.org/) ER diagram. Lookups are dashed edges, master-detail solid. `--format` (`-f`) is `mmd` (text, default), `svg`, or `png` — inferred from the `--out` extension if omitted. `svg`/`png` are rendered via the public [mermaid.ink](https://mermaid.ink) service (needs network; sends object/field names to a third party) and require `--out`. |
 | `dsfm --help` | Show usage. |
 | `dsfm --version` | Print the CLI version. |
 
