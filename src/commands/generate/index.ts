@@ -1,6 +1,6 @@
 import type { Command } from "commander";
-import { loadModel, ParseError } from "../../parser.js";
-import { validate } from "../../validator.js";
+import { loadModel, ParseError } from "@/parser.js";
+import { validate } from "@/validator.js";
 import { emit } from "./emitter.js";
 import { watchModel } from "./watch.js";
 
